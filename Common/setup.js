@@ -7,27 +7,20 @@ export const psychoJS = new PsychoJS({
 });
 
 export const expScheduler = new Scheduler(psychoJS);
-psychoJS.schedule(expScheduler);
-psychoJS.start();
-
-// Build dialog
-let myDialog = psychoJS.gui.DlgFromDict({
-  dictionary: { '': "Click 'OK' to start. Browser will enter full screen mode!" },
-  title: 'Flanker Task',
-});
-psychoJS.schedule(myDialog());
-
-export function startgui() {
-  return function () {
-    if (psychoJS.gui.dialogComponent.button !== 'OK') {
-      return Scheduler.Event.FLIP_REPEAT;
-    }
-    return Scheduler.Event.NEXT;
-  };
-}
+export const dialogCancelScheduler = new Scheduler(psychoJS);
 
 export function quitPsychoJS() {
-  return function () {
-    psychoJS._scheduler.stop();
-  };
+    return function () {
+        psychoJS._scheduler.stop();
+    };
+}
+
+dialogCancelScheduler.add(quitPsychoJS, '', false);
+
+export function subjectInfo(demographics) {
+    let startDlg = psychoJS.gui.DlgFromDict({
+        title: "Click 'OK' to start. Browser will enter full screen mode!",
+        dictionary: demographics,
+    },);
+    return startDlg ;
 }

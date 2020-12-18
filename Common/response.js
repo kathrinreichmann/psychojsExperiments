@@ -11,7 +11,7 @@ export const keyboard = new core.Keyboard({
   status: PsychoJS.Status.NOT_STARTED,
 });
 
-export function waitKey(keyList = [], max_wait = Infinity, waitRelease = false) {
+export function waitKey({keyList = [], max_wait = Infinity, waitRelease = false} = {}) {
   return function () {
     let continueRoutine = true;
 

@@ -62,6 +62,10 @@ export function getRandomArbitrary(min, max) {
   return Math.random() * (max - min) + min;
 }
 
+export function intrange(min, max) {
+  return Array.from(new Array((max-min)+1), (x,i) => i + min) 
+}
+
 // Returns a random int number between min (inclusive) and max (exclusive)
 export function getRandomInt(min, max) {
   min = Math.ceil(min);

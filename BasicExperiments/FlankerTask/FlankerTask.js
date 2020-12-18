@@ -1,21 +1,20 @@
-////////////////////////////////////////////////////////////////////////
-//                      Basic Flanker Experiment                      //
-////////////////////////////////////////////////////////////////////////
 import { Scheduler } from '../../lib/util-2020.1.js';
 import * as util from '../../lib/util-2020.1.js';
 import * as visual from '../../lib/visual-2020.1.js';
-
 import { Data, saveData } from '../../Common/data.js';
 import { Form } from '../../Common/form.js';
-import { psychoJS, startgui, expScheduler, quitPsychoJS } from '../../Common/setup.js';
-import { shuffle, hideMouse } from '../../Common/utils.js';
+import { psychoJS, subjectInfo, expScheduler, dialogCancelScheduler, quitPsychoJS } from '../../Common/setup.js';
+import { shuffle, intrange, hideMouse } from '../../Common/utils.js';
 import { keyboard, waitKey } from '../../Common/response.js';
-import { timeInterval, resetTrlTimer, expTimer, timestamp } from '../../Common/timer.js';
+import { timeInterval, resetTrlTimer, timestamp } from '../../Common/timer.js';
 import { draw, clear } from '../../Common/draw.js';
 
+////////////////////////////////////////////////////////////////////////
+//                      Basic Flanker Experiment                      //
+////////////////////////////////////////////////////////////////////////
 const prms = {
-  nTrlsP: 4, // number of trials in first block (practice)
-  nTrlsE: 8, // number of trials in subsequent blocks
+  nTrlsP: 8, // number of trials in first block (practice)
+  nTrlsE: 40, // number of trials in subsequent blocks
   nBlks: 2,
   fixDur: 0.5,
   fbDur: 0.5,
@@ -33,7 +32,8 @@ psychoJS.openWindow({
   waitBlanking: true,
 });
 
-// data
+// TO DO: sort this path stuff!!
+// data 
 let data = new Data('FlankerTask', '/home/ian/Documents/JavaScript/psychojsExperiments/BasicExperiments/FlankerTask/');
 data.initData(prms.nBlks, prms.nTrlsE);
 
@@ -114,6 +114,7 @@ function codeTrial() {
       save: true,
     });
     data.ctrl++;
+    console.log(demographics.Age)
     return Scheduler.Event.NEXT;
   };
 }
@@ -151,7 +152,7 @@ function singleFlankerTrial(text) {
   // flanker stimmulus until key response
   expScheduler.add(setFlankerStim(text));
   expScheduler.add(draw(stimFlanker));
-  expScheduler.add(waitKey());
+  expScheduler.add(waitKey({keyList:prms.respKeys} ));
   expScheduler.add(codeTrial());
   expScheduler.add(clear(stimFlanker));
 
@@ -164,6 +165,7 @@ function singleFlankerTrial(text) {
   // inter-trial-interval
   expScheduler.add(resetTrlTimer());
   expScheduler.add(timeInterval(prms.iti));
+
 }
 
 function presentBlockText() {
@@ -176,53 +178,69 @@ function presentBlockText() {
 }
 
 let conditions = [
-  { text: '<<<<<', comp: 'comp', respDir: 'left', corrKey: prms.respKeys[0] },
-  { text: '>>>>>', comp: 'comp', respDir: 'right', corrKey: prms.respKeys[1] },
+  { text: '<<<<<', comp: 'comp',   respDir: 'left',  corrKey: prms.respKeys[0] },
+  { text: '>>>>>', comp: 'comp',   respDir: 'right', corrKey: prms.respKeys[1] },
   { text: '<<><<', comp: 'incomp', respDir: 'right', corrKey: prms.respKeys[1] },
-  { text: '>><>>', comp: 'incomp', respDir: 'left', corrKey: prms.respKeys[0] },
+  { text: '>><>>', comp: 'incomp', respDir: 'left',  corrKey: prms.respKeys[0] },
 ];
 
-// Create Experiment Sequence
-expScheduler.add(startgui());
+// Participant Deemographics
+let demographics = { 
+    'Age': intrange(18, 60),
+    'Gender': ['male', 'female', 'divers'], 
+    'Handedness': ['right', 'left', 'na']
+}
 
-// Participant information
-let form = new Form();
-expScheduler.add(form.setup('../../forms/vp_info_basic.html'));
-expScheduler.add(form.display(data));
+// Start PsychoJS
+psychoJS.start();
+psychoJS.schedule(subjectInfo(demographics));
+psychoJS.scheduleCondition(function() { return (psychoJS.gui.dialogComponent.button === 'OK'); }, expScheduler, dialogCancelScheduler);
+
+
+// Add demographics to data
+expScheduler.add(function () {
+  data.addData(demographics);
+  return Scheduler.Event.NEXT;
+});
+
+// // Alternative demographic information using html
+// let form = new Form();
+// expScheduler.add(form.setup('../../forms/vp_info_basic.html'));
+// expScheduler.add(form.display(data));
 
 // Welcome Screen
 expScheduler.add(hideMouse(true));
 expScheduler.add(draw(textWelcome));
-expScheduler.add(waitKey(['space']));
+expScheduler.add(waitKey({keyList: 'space' }));
 expScheduler.add(clear(textWelcome));
 expScheduler.add(resetTrlTimer());
 expScheduler.add(timeInterval(prms.waitDur));
 
 // Instructions
 expScheduler.add(draw(textInstructions));
-expScheduler.add(waitKey(['space']));
+expScheduler.add(waitKey({keyList: 'space' }));
 expScheduler.add(clear(textInstructions));
 expScheduler.add(resetTrlTimer());
 expScheduler.add(timeInterval(prms.waitDur));
 
 // Blocks of flanker stimuli separated by break with performance feedback
 for (let blk = 0; blk < prms.nBlks; blk++) {
-  let reps = blk === 0 ? prms.nTrlsP / conditions.length : prms.nTrlsE / conditions.length;
-  let blk_conditions = shuffle(new Array(reps).fill(conditions).flat());
-  for (let trl = 0; trl < blk_conditions.length; trl++) {
-    singleFlankerTrial(blk_conditions[trl].text);
-    data.addDataBlkTrl(blk, trl, blk_conditions[trl]);
-  }
-  presentBlockText();
+    let reps = blk === 0 ? prms.nTrlsP / conditions.length : prms.nTrlsE / conditions.length;
+    let blk_conditions = shuffle(new Array(reps).fill(conditions).flat());
+    for (let trl = 0; trl < blk_conditions.length; trl++) {
+        singleFlankerTrial(blk_conditions[trl].text);
+        data.addDataBlkTrl(blk, trl, blk_conditions[trl]);
+    }
+    presentBlockText();
 }
 
 // Save Data
 expScheduler.add(saveData(data));
 
-// End Screen
+// End Screen and quit
 expScheduler.add(draw(textEnd));
-expScheduler.add(waitKey(['space']));
+expScheduler.add(waitKey({keyList: 'space' }));
 expScheduler.add(clear(textEnd));
 expScheduler.add(hideMouse(false));
-
 expScheduler.add(quitPsychoJS());
+

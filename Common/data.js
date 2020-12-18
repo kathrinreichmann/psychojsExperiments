@@ -21,33 +21,34 @@ export class Data {
   }
 
   setFileName() {
-    return this.dirName + '/data/' + this.expName + '_' + this.vpNum;
+    return this.dirName + 'data/' + this.expName + '_' + this.vpNum;
   }
 
   initData(nblks, ntrls) {
-    this.data = [];
-    let os = window.navigator.platform;
-    let framerate = psychoJS.window.getActualFrameRate();
-    let browser = psychoJS.window._psychoJS._browser;
-    let xres = psychoJS.window._size[0];
-    let yres = psychoJS.window._size[1];
-    for (let blk = 0; blk < nblks; blk++) {
-      this.data.push([]);
-      for (let trl = 0; trl < ntrls; trl++) {
-        this.data[blk].push({
-          expName: this.expName,
-          vpNum: this.vpNum,
-          date: timestamp(),
-          os: os,
-          browser: browser,
-          framerate: framerate,
-          xres: xres,
-          yres: yres,
-          blk: blk + 1,
-          trl: trl + 1,
-        });
+      this.data = [];
+      let os = window.navigator.platform;
+      let framerate = psychoJS.window.getActualFrameRate();
+      let browser = psychoJS.window._psychoJS._browser;
+      let xres = psychoJS.window._size[0];
+      let yres = psychoJS.window._size[1];
+      for (let blk = 0; blk < nblks; blk++) {
+          this.data.push([]);
+          for (let trl = 0; trl < ntrls; trl++) {
+              this.data[blk].push({
+                  expName: this.expName,
+                  vpNum: this.vpNum,
+                  date: timestamp(),
+                  os: os,
+                  browser: browser,
+                  framerate: framerate,
+                  xres: xres,
+                  yres: yres,
+                  blk: blk + 1,
+                  trl: trl + 1,
+                  save: false,
+              });
+          }
       }
-    }
   }
 
   addData(dat) {
